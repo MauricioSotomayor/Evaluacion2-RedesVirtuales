@@ -4,22 +4,21 @@ set -e
 
 echo "===== INICIO DESPLIEGUE SAMPLE APP ====="
 
-# Eliminar contenedor anterior si existe
+echo "===== ELIMINANDO CONTENEDOR ANTERIOR ====="
 docker rm -f samplerunning 2>/dev/null || true
 
-# Eliminar archivos temporales anteriores
+echo "===== PREPARANDO DIRECTORIO TEMPORAL ====="
 rm -rf tempdir
 
-# Crear estructura temporal
-mkdir -p tempdir/templates
 mkdir -p tempdir/static
+mkdir -p tempdir/templates
 
-# Copiar aplicación
 cp sample_app.py tempdir/
-cp -r templates/. tempdir/templates/
 cp -r static/. tempdir/static/
+cp -r templates/. tempdir/templates/
 
-# Crear Dockerfile
+echo "===== CREANDO DOCKERFILE ====="
+
 cat > tempdir/Dockerfile <<'EOF'
 FROM python:3.10.5-slim-bullseye
 
@@ -39,9 +38,9 @@ EXPOSE 8888
 CMD ["python", "/home/myapp/sample_app.py"]
 EOF
 
-echo "===== CONSTRUYENDO IMAGEN ====="
+echo "===== CONSTRUYENDO IMAGEN DOCKER ====="
 
-docker build -t sampleapp tempdir/
+docker build --network=host -t sampleapp tempdir/
 
 echo "===== EJECUTANDO CONTENEDOR ====="
 
@@ -50,8 +49,17 @@ docker run -d \
 --name samplerunning \
 sampleapp
 
+echo "===== ESPERANDO INICIO DE LA APLICACION ====="
+
+sleep 5
+
 echo "===== CONTENEDORES ACTIVOS ====="
 
 docker ps
 
-echo "===== DESPLIEGUE FINALIZADO ====="
+echo "===== VALIDANDO APLICACION ====="
+
+docker exec samplerunning python -c \
+'import urllib.request; print(urllib.request.urlopen("http://127.0.0.1:8888", timeout=10).read().decode())'
+
+echo "===== DESPLIEGUE FINALIZADO CORRECTAMENTE ====="
