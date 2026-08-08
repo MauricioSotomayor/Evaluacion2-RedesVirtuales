@@ -15,6 +15,7 @@ docker run -d \
 -p 8888:8888 \
 --name samplerunning \
 sampleapp
+python /home/myapp/sample_app.py
 
 echo "===== ESPERANDO INICIO DE LA APLICACION ====="
 sleep 5
